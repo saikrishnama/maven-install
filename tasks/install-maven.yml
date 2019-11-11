@@ -1,0 +1,59 @@
+---
+- name: Create Installation directory for Maven
+  file:
+    dest: "{{ maven_install_dir}}/maven"
+    owner: '{{ app_user | default("jenkins")}}'
+    group: '{{ app_group | default("jenkins')}}'
+    mode: 0755
+    state: directory
+  tags: mvn
+
+- name: Download Maven Softwares
+  get_ur:
+    url: '{{maven_url}}'
+    dest: '{{ software_tmp_store_loc }}/{{ maven_zip_name }}'
+  tags: mvn
+- name: unzip the maven tar file
+  unarchive:
+    src: "{{ software_tmp_store_loc }}/{{ maven_zip_name }}"
+    dest: "{{ maven_install_dir }}"
+    copy: false
+    owner: '{{ app_user | default("jenkins")}}'
+    group: '{{ app_group | default("jenkins')}}'
+    mode: 0755
+  tags: mvn
+
+- name: Update Maven .M2 repo
+  file:
+    dest: /home/'{{ app_user | default("jenkins")}}'/.m2
+    mode: 0755
+    owner: '{{ app_user | default("jenkins")}}'
+    group: '{{ app_group | default("jenkins')}}'
+    state: directory
+  tags: mvn
+
+- name: Copy the settings.xml file if it has custom pointig to internal repo Based Boolean Expression
+  template:
+    src: settings.xml.j2
+    dest: '/home/{{app_user | default("jenkins")}}/.m2/settings.xml'
+    mode: 0755
+    owner: '{{ app_user | default("jenkins")}}'
+    group: '{{ app_group | default("jenkins')}}'
+  tags: mvn 
+  when: m2_custtom_setings |bool
+
+- name: Add Maven Home Path to .bashrc file
+  blockinfile:
+    path: '{{ home_directory }}/.bashrc'
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK Seeting Of M2 Home Path-->"
+    insertafter: EOF
+    block: |
+      export M2_HOME='{{ maven_install_dir }}/apache-maven-{{ mvn_version}}'
+      export PATH="M2_HOME/bin:$PATH"
+  tags: mvn
+
+  - name: Clean up unwanted softwares
+    file:
+      path: '{{ software_tmp_store_loc }}/{{maven_zip_name}}'
+      state: absent
+      

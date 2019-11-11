@@ -1,0 +1,33 @@
+---
+---
+- name: create application group
+  group:
+    name: '{{ app_group | default("jenkins") }}'
+    state: present
+
+- name: create app user and assign this user group to whenn group
+  user:
+    name: '{{ app_user | default("jenkins") }}'
+    group: '{{ app_group | default("jenkins") }}'
+    groups: '{{ app_group | default("jenkins") }}',wheel
+    append: true
+    state: present
+
+- name: update permissions for the file
+  file:
+    path: /etc/sudoers.d/wheel-user
+    mode: 0640
+
+- name: update the sudoer.d file for the wheel user as password less
+  lineinfile:
+    dest: /etc/sudoers.d/wheel-user
+    line: "%whell   ALL=(ALL)   ALL"
+
+- name: update the sudoer.d file for the app_user {{ app_user }} passwordless privilages
+  lineinfile:
+    dest: /etc/sudoers.d/wheel-user
+    line: '{{ app_user | default("jenkins")}}   ALL=(ALL)   NOPASSWD: ALL'
+- name: Rever back  permissions for the file
+  file:
+    path: /etc/sudoers.d/wheel-user
+    mode: 0440

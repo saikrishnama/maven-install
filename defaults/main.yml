@@ -1,0 +1,8 @@
+---
+mvn_version: 
+maven_url:
+
+software_tmp_store_loc:
+maven_zip_name: apache-maven-"{{mvn_version}}"-bin.tar.gz
+maven_install_dir:
+m2_custtom_setings: false
